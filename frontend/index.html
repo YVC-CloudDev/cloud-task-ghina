@@ -1,28 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cloud Task Manager</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Cloud Task Manager</h1>
-    <p class="subtitle">Serverless task management system on AWS</p>
-
-    <div class="card">
-      <h2>Add New Task</h2>
-      <div class="input-row">
-        <input type="text" id="taskInput" placeholder="Enter a new task">
-        <button onclick="addTask()">Add Task</button>
+  <div class="app-wrapper">
+    <header class="hero">
+      <div>
+        <span class="badge">AWS Serverless Project</span>
+        <h1>Cloud Task Manager</h1>
+        <p>
+          A cloud-based task management system deployed on AWS using
+          S3, CloudFront, API Gateway, Lambda and DynamoDB.
+        </p>
       </div>
-    </div>
+    </header>
 
-    <div class="card">
-      <h2>Tasks</h2>
-      <ul id="taskList"></ul>
-    </div>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span>Total Tasks</span>
+        <strong id="totalTasks">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Completed</span>
+        <strong id="completedTasks">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Pending</span>
+        <strong id="pendingTasks">0</strong>
+      </div>
+    </section>
+
+    <main class="dashboard">
+      <section class="panel add-panel">
+        <h2>Add New Task</h2>
+        <p class="panel-text">Create a new task and store it directly in DynamoDB.</p>
+
+        <div class="input-row">
+          <input type="text" id="taskInput" placeholder="Enter a new cloud task..." />
+          <button class="primary-btn" onclick="addTask()">Add Task</button>
+        </div>
+      </section>
+
+      <section class="panel tasks-panel">
+        <div class="section-header">
+          <div>
+            <h2>Task List</h2>
+            <p class="panel-text">Live data loaded from AWS API Gateway and Lambda.</p>
+          </div>
+          <button class="secondary-btn" onclick="loadTasks()">Refresh</button>
+        </div>
+
+        <div id="loadingState" class="loading">Loading tasks from AWS...</div>
+        <ul id="taskList"></ul>
+        <div id="emptyState" class="empty-state">No tasks found. Add your first task.</div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Cloud Development Final Project</span>
+      <span>Serverless Architecture on AWS</span>
+    </footer>
   </div>
 
   <script src="app.js"></script>
