@@ -1,0 +1,38 @@
+name: Deploy Backend Lambda to AWS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using IAM Role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Package Lambda function
+        run: |
+          cd backend
+          zip lambda_function.zip lambda_function.py
+
+      - name: Deploy Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name CloudTaskFunction \
+            --zip-file fileb://backend/lambda_function.zip
