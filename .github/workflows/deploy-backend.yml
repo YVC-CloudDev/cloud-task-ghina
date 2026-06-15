@@ -7,6 +7,7 @@ on:
     paths:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -16,23 +17,32 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials using IAM Role
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Package Lambda function
+      - name: Package Lambda code
         run: |
           cd backend
-          zip lambda_function.zip lambda_function.py
+          if [ -f package-lock.json ]; then
+            npm ci --omit=dev
+          elif [ -f package.json ]; then
+            npm install --omit=dev
+          fi
+          zip -r ../lambda.zip .
 
-      - name: Deploy Lambda function code
+      - name: Deploy Lambda function
         run: |
           aws lambda update-function-code \
-            --function-name CloudTaskFunction \
-            --zip-file fileb://backend/lambda_function.zip
+            --function-name $LAMBDA_FUNCTION_NAME \
+            --zip-file fileb://lambda.zip
