@@ -4,29 +4,46 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy.yml"
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      FRONTEND_BUCKET_NAME: ${{ secrets.FRONTEND_BUCKET_NAME }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials using IAM Role
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload frontend files to S3
+      - name: Inject API base URL
         run: |
-          aws s3 sync frontend/ s3://cloud-task-ghina-frontend --delete
+          if grep -q "__API_BASE_URL__" frontend/app.js; then
+            sed -i "s|__API_BASE_URL__|$API_BASE_URL|g" frontend/app.js
+          fi
+
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend/ s3://$FRONTEND_BUCKET_NAME --delete
 
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id E3MI9ZW2ASB2 --paths "/*"
+          aws cloudfront create-invalidation \
+            --distribution-id $CLOUDFRONT_DISTRIBUTION_ID \
+            --paths "/*"
